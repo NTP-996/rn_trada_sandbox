@@ -4,7 +4,10 @@ import AsyncStorage from '@react-native-community/async-storage';
 import { Container, Content, Card, CardItem, Body, Text, Icon, Button } from 'native-base';
 import { NavigationEvents } from 'react-navigation';
 
-import WalletComponent from './WalletComponent'
+// import { IceteaWeb3 } from '@iceteachain/web3';
+import tweb3 from '../service';
+
+import WalletComponent from './WalletComponent';
 
 export default class WalletsScreen extends Component {
     static navigationOptions = {
@@ -65,6 +68,27 @@ export default class WalletsScreen extends Component {
                 </Container>
             </View>
         );
+    }
+
+    componentWillMount() {
+        // const tweb3 = new IceteaWeb3('wss://rpc.icetea.io/websocket');
+        const pollingInterval = 2000;
+
+        this.poller = setInterval(() => {
+            const wallets = [...this.state.wallets];
+
+            wallets.forEach(wallet => {
+                tweb3.getBalance(wallet.address).then((balance) => {
+                    // console.log(balance.balance)
+                    wallet.balance = balance.balance / 10 ** 6;
+                    // console.log(wallet.balance);
+                });
+            });
+
+            this.setState({ wallets }, () => {
+                AsyncStorage.setItem('WALLETS', JSON.stringify(wallets));
+            })
+        }, pollingInterval);
     }
 }
 
